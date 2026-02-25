@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Domain Watcher CRUD</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    input { padding: 5px; margin-right: 5px; }
+    button { margin-left: 5px; }
+    li { margin-bottom: 5px; }
+  </style>
+</head>
+<body>
+<h2>Domain Watcher</h2>
+
+<input id="domainInput" placeholder="example.com">
+<button onclick="addDomain()">Add Domain</button>
+
+<h3>Domains:</h3>
+<ul id="domainList"></ul>
+
+<script>
+const owner = "YOUR_GITHUB_USERNAME";        // private repo owner
+const repo = "domain-watcher";               // private repo name
+const branch = "main";                       // branch where domains.json lives
+const filePath = "domains.json";             // path to your JSON file
+
+// Get token from prompt for simplicity (do NOT hardcode)
+let githubToken = prompt("Enter GitHub Personal Access Token (with repo access)");
+
+let domains = [];
+
+// Load domains from private repo
+async function loadDomains() {
+  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=${branch}`, {
+    headers: { Authorization: `token ${githubToken}` }
+  });
+  const data = await res.json();
+  const content = atob(data.content);
+  domains = JSON.parse(content);
+  renderList();
+}
+
+// Render domain list
+function renderList() {
+  const ul = document.getElementById("domainList");
+  ul.innerHTML = "";
+  domains.forEach((d, i) => {
+    const li = document.createElement("li");
+    li.textContent = d.name;
+
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "Edit";
+    editBtn.onclick = () => editDomain(i);
+    li.appendChild(editBtn);
+
+    const delBtn = document.createElement("button");
+    delBtn.textContent = "Delete";
+    delBtn.onclick = () => deleteDomain(i);
+    li.appendChild(delBtn);
+
+    ul.appendChild(li);
+  });
+}
+
+// Add domain
+function addDomain() {
+  const input = document.getElementById("domainInput");
+  const name = input.value.trim();
+  if (!name || domains.find(d => d.name === name)) return;
+  domains.push({ name });
+  input.value = "";
+  renderList();
+  saveDomains();
+}
+
+// Edit domain
+function editDomain(index) {
+  const newName = prompt("Edit domain name:", domains[index].name);
+  if (!newName) return;
+  domains[index].name = newName.trim();
+  renderList();
+  saveDomains();
+}
+
+// Delete domain
+function deleteDomain(index) {
+  if (confirm(`Delete ${domains[index].name}?`)) {
+    domains.splice(index, 1);
+    renderList();
+    saveDomains();
+  }
+}
+
+// Save back to private repo
+async function saveDomains() {
+  const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=${branch}`, {
+    headers: { Authorization: `token ${githubToken}` }
+  });
+  const data = await res.json();
+  const sha = data.sha; // required by GitHub API
+
+  await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
+    method: "PUT",
+    headers: {
+      Authorization: `token ${githubToken}`,
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      message: "Update domains.json via UI",
+      content: btoa(JSON.stringify(domains, null, 2)),
+      sha: sha,
+      branch: branch
+    })
+  });
+}
+
+loadDomains();
+</script>
+</body>
+</html>
