@@ -20,27 +20,14 @@
 <ul id="domainList"></ul>
 
 <script>
-const owner = "YOUR_GITHUB_USERNAME";        // private repo owner
-const repo = "domain-watcher";               // private repo name
-const branch = "main";                       // branch where domains.json lives
-const filePath = "domains.json";             // path to your JSON file
-
-// Get token from prompt for simplicity (do NOT hardcode)
-let githubToken = prompt("Enter GitHub Personal Access Token (with repo access)");
-
 let domains = [];
 
-// Load domains from private repo
+// Load domains from the local domains.json in the same repo
 async function loadDomains() {
   try {
-    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=${branch}`, {
-      headers: {
-        Authorization: `token ${githubToken}`,
-        Accept: "application/vnd.github.v3.raw"  // important: gets JSON directly
-      }
-    });
-    if (!res.ok) throw new Error("Failed to load domains.json. Check token and repo path.");
-    domains = await res.json(); // directly the array
+    const res = await fetch("domains.json");
+    if (!res.ok) throw new Error("Failed to load domains.json");
+    domains = await res.json(); // directly an array
     renderList();
   } catch (err) {
     alert(err.message);
@@ -70,7 +57,7 @@ function renderList() {
   });
 }
 
-// Add domain
+// Add domain (in-memory only)
 function addDomain() {
   const input = document.getElementById("domainInput");
   const name = input.value.trim();
@@ -78,57 +65,21 @@ function addDomain() {
   domains.push({ name });
   input.value = "";
   renderList();
-  saveDomains();
 }
 
-// Edit domain
+// Edit domain (in-memory only)
 function editDomain(index) {
   const newName = prompt("Edit domain name:", domains[index].name);
   if (!newName) return;
   domains[index].name = newName.trim();
   renderList();
-  saveDomains();
 }
 
-// Delete domain
+// Delete domain (in-memory only)
 function deleteDomain(index) {
   if (confirm(`Delete ${domains[index].name}?`)) {
     domains.splice(index, 1);
     renderList();
-    saveDomains();
-  }
-}
-
-// Save back to private repo
-async function saveDomains() {
-  try {
-    // 1️⃣ Get current SHA
-    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}?ref=${branch}`, {
-      headers: { Authorization: `token ${githubToken}` }
-    });
-    if (!res.ok) throw new Error("Failed to fetch file SHA.");
-    const data = await res.json();
-    const sha = data.sha;
-
-    // 2️⃣ Update the file
-    const updateRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents/${filePath}`, {
-      method: "PUT",
-      headers: {
-        Authorization: `token ${githubToken}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        message: "Update domains.json via UI",
-        content: btoa(JSON.stringify(domains, null, 2)),
-        sha: sha,
-        branch: branch
-      })
-    });
-
-    if (!updateRes.ok) throw new Error("Failed to save domains.json.");
-  } catch (err) {
-    alert(err.message);
-    console.error(err);
   }
 }
 
