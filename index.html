@@ -22,12 +22,12 @@
 <script>
 let domains = [];
 
-// Load domains from the local domains.json in the same repo
+// Load domains from local domains.json in the same repo
 async function loadDomains() {
   try {
-    const res = await fetch("domains.json");
+    const res = await fetch("domains.json"); // local file
     if (!res.ok) throw new Error("Failed to load domains.json");
-    domains = await res.json(); // directly an array
+    domains = await res.json(); // JSON array directly
     renderList();
   } catch (err) {
     alert(err.message);
@@ -35,7 +35,7 @@ async function loadDomains() {
   }
 }
 
-// Render domain list
+// Render the domain list
 function renderList() {
   const ul = document.getElementById("domainList");
   ul.innerHTML = "";
@@ -57,7 +57,7 @@ function renderList() {
   });
 }
 
-// Add domain (in-memory only)
+// Add a new domain (in-memory)
 function addDomain() {
   const input = document.getElementById("domainInput");
   const name = input.value.trim();
@@ -67,7 +67,7 @@ function addDomain() {
   renderList();
 }
 
-// Edit domain (in-memory only)
+// Edit a domain (in-memory)
 function editDomain(index) {
   const newName = prompt("Edit domain name:", domains[index].name);
   if (!newName) return;
@@ -75,7 +75,7 @@ function editDomain(index) {
   renderList();
 }
 
-// Delete domain (in-memory only)
+// Delete a domain (in-memory)
 function deleteDomain(index) {
   if (confirm(`Delete ${domains[index].name}?`)) {
     domains.splice(index, 1);
@@ -83,6 +83,7 @@ function deleteDomain(index) {
   }
 }
 
+// Initialize
 loadDomains();
 </script>
 </body>
