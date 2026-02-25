@@ -1,4 +1,4 @@
 [
-  {"name": "example.com"},
-  {"name": "test123domain.com"}
+  {"name":"example.com","expiry":"2026-04-01"},
+  {"name":"example.net","expiry":"2026-05-10"}
 ]
